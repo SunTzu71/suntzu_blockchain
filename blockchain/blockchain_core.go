@@ -7,6 +7,8 @@ type BlockchainCore struct {
 	Blocks          []*Block       `json:"blocks"`
 }
 
+// NewBlockchain creates a new blockchain instance with a genesis block
+// Returns a pointer to the new BlockchainCore
 func NewBlockchain(genesisBlock Block) *BlockchainCore {
 	blockchainCore := new(BlockchainCore)
 	blockchainCore.TransactionPool = []*Transaction{}
@@ -16,6 +18,8 @@ func NewBlockchain(genesisBlock Block) *BlockchainCore {
 	return blockchainCore
 }
 
+// ToJson converts the BlockchainCore structure to a JSON string
+// Returns the JSON string representation or an error message if marshal fails
 func (bc BlockchainCore) ToJson() string {
 	nb, err := json.Marshal(bc)
 	if err != nil {

@@ -14,9 +14,10 @@ func init() {
 
 // Main function to run the blockchain
 func main() {
-	block := blockchain.NewBlock("0x", 0)
-	log.Println(block)
 
+	genesisBlock := blockchain.NewBlock("0x0", 0)
 	transaction := blockchain.NewTransaction("0x0", "0x1", 2000, []byte("This is a test transaction"))
-	log.Println(transaction)
+	genesisBlock.Transactions = append(genesisBlock.Transactions, transaction)
+	blockchain := blockchain.NewBlockchain(*genesisBlock)
+	log.Println(blockchain.ToJson())
 }

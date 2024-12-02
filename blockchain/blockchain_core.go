@@ -1,6 +1,12 @@
 package blockchain
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"log"
+	"strings"
+
+	"github.com/SunTzu71/suntzu_blockchain/constants"
+)
 
 type BlockchainCore struct {
 	TransactionPool []*Transaction `json:"transaction_pool"`
@@ -32,4 +38,81 @@ func (bc BlockchainCore) ToJson() string {
 // AddTransactionToTransactionPool takes a Transaction and adds it to the blockchain's transaction pool
 func (bc *BlockchainCore) AddTransactionToTransactionPool(transaction Transaction) {
 	bc.TransactionPool = append(bc.TransactionPool, &transaction)
+}
+
+// AddBlock adds a new block to the blockchain and removes its transactions from the transaction pool.
+// It takes a pointer to a Block as input and updates both the blockchain's transaction pool
+// and blocks array. Transactions in the new block are removed from the pool to prevent double-spending.
+func (bc *BlockchainCore) AddBlock(b *Block) {
+	// Create a map of transaction hashes in the new block
+	txnMap := make(map[string]bool)
+	for _, txn := range b.Transactions {
+		txnMap[txn.TransactionHash] = true
+	}
+
+	// Create a new slice for transactions that should remain in the pool
+	var newTransactionPool []*Transaction
+	for _, txn := range bc.TransactionPool {
+		if !txnMap[txn.TransactionHash] {
+			newTransactionPool = append(newTransactionPool, txn)
+		}
+	}
+
+	// Replace the transaction pool with the filtered version
+	bc.TransactionPool = newTransactionPool
+
+	// Add block to blockchain
+	bc.Blocks = append(bc.Blocks, b)
+}
+
+// ProofOfWorkMining continuously mines new blocks using proof of work consensus.
+// It takes a miner's address as input and rewards successful mining with coins.
+// The function runs indefinitely, creating new blocks that meet the mining difficulty
+// requirement by incrementing a nonce value until a valid hash is found.
+func (bc *BlockchainCore) ProofOfWorkMining(minersAddress string) {
+	// calculcate the prevHash
+	prevHash := bc.Blocks[len(bc.Blocks)-1].Hash()
+
+	// had to set this as int64 getting error that new block nonce was int
+	var nonce int64 = 0
+
+	for {
+		// create a new block
+		guessBlock := NewBlock(prevHash, nonce)
+
+		// copy the transaction pool
+		for _, txn := range bc.TransactionPool {
+			//newTxn := NewTransaction(txn.From, txn.To, txn.Value, txn.Data)
+			newTxn := new(Transaction)
+			newTxn.Data = txn.Data
+			newTxn.From = txn.From
+			newTxn.To = txn.To
+			newTxn.Status = txn.Status
+			newTxn.Value = txn.Value
+			newTxn.TransactionHash = txn.TransactionHash
+			newTxn.PublicKey = txn.PublicKey
+			newTxn.Signature = txn.Signature
+
+			guessBlock.AddTransactionToTheBlock(newTxn)
+		}
+
+		// guess the hash
+		guessHash := guessBlock.Hash()
+		desiredHash := strings.Repeat("0", constants.MINING_DIFFICULTY)
+		ourSolutionHash := guessHash[2 : 2+constants.MINING_DIFFICULTY]
+
+		if ourSolutionHash == desiredHash {
+			rewardTxn := NewTransaction(constants.BLOCKCHAIN_ADDRESS, minersAddress, constants.MINING_REWARD, []byte{})
+			rewardTxn.Status = constants.SUCCESS
+			guessBlock.Transactions = append(guessBlock.Transactions, rewardTxn)
+			bc.AddBlock(guessBlock)
+
+			log.Println(bc.ToJson(), "\n\n")
+
+			prevHash = bc.Blocks[len(bc.Blocks)-1].Hash()
+			nonce = 0
+			continue
+		}
+		nonce++
+	}
 }

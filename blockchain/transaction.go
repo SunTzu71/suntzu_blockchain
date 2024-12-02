@@ -1,6 +1,8 @@
 package blockchain
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"math"
 
@@ -27,7 +29,7 @@ func NewTransaction(from string, to string, value uint64, data []byte) *Transact
 	t.Value = value
 	t.Data = data
 	t.Status = constants.PENDING
-	//t.TransactionHash = t.Hash() // TODO: Uncomment when hash function is implemented
+	t.TransactionHash = t.Hash()
 	t.PublicKey = ""
 	t.Signature = []byte{}
 	return t
@@ -55,4 +57,13 @@ func (t Transaction) VerifyTransaction() bool {
 
 	// TODO: need to implement VerifySignature when we create wallet logic
 	return true
+}
+
+func (t Transaction) Hash() string {
+	bs, _ := json.Marshal(t)
+	sum := sha256.Sum256(bs)
+	hexRep := hex.EncodeToString(sum[:32])
+	formattedHexRep := constants.HEX_PREFIX + hexRep
+
+	return formattedHexRep
 }

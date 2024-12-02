@@ -42,7 +42,6 @@ func (b Block) ToJson() string {
 // Hash calculates and returns a SHA-256 hash of the block's contents as a hexadecimal string,
 // prefixed with the hex prefix constant
 func (b Block) Hash() string {
-
 	bs, _ := json.Marshal(b)
 	sum := sha256.Sum256(bs)
 	hexRep := hex.EncodeToString(sum[:32])

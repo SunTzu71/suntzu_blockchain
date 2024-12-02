@@ -2,7 +2,7 @@ package constants
 
 // Constants used throughout the blockchain
 const (
-	BLOCKCHAIN_NAME    = "SuntzuChain"
+	BLOCKCHAIN_NAME    = "SunTzuChain"
 	HEX_PREFIX         = "0x"
 	SUCCESS            = "success"
 	FAILED             = "failed"
@@ -12,7 +12,7 @@ const (
 	CURRENCY_NAME      = "SZU"
 	DECIMAL            = 100
 	BLOCKCHAIN_ADDRESS = "SunTzu_Faucet"
-	BLOCKCHAIN_DB_PATH = "database/sunzuchain.db"
+	BLOCKCHAIN_DB_PATH = "database/suntzuchain.db"
 	BLOCKCHAIN_KEY     = "blockchain_key"
 	ADDRESS_PREFIX     = "suntzuchain"
 )

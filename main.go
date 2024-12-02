@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"sync"
 
 	"github.com/SunTzu71/suntzu_blockchain/blockchain"
 	"github.com/SunTzu71/suntzu_blockchain/constants"
@@ -15,12 +16,15 @@ func init() {
 // Main function to run the blockchain
 func main() {
 
-	block := blockchain.NewBlock("0x0", 1)
-	log.Println("Transaction hash", block.Hash())
+	var wg sync.WaitGroup
 
 	genesisBlock := blockchain.NewBlock("0x0", 0)
 	transaction := blockchain.NewTransaction("0x0", "0x1", 2000, []byte("This is a test transaction"))
-	genesisBlock.Transactions = append(genesisBlock.Transactions, transaction)
 	blockchain := blockchain.NewBlockchain(*genesisBlock)
 	log.Println(blockchain.ToJson())
+	log.Println("Start Mining")
+	wg.Add(1)
+	go blockchain.ProofOfWorkMining("SunTzu")
+	blockchain.AddTransactionToTransactionPool(*transaction)
+	wg.Wait()
 }

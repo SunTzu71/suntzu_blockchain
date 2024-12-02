@@ -14,14 +14,30 @@ type BlockchainCore struct {
 }
 
 // NewBlockchain creates a new blockchain instance with a genesis block
+// Uses KeyExists() to check if blockchain data exists in database
+// Uses PutIntoDb() to persist blockchain data
 // Returns a pointer to the new BlockchainCore
 func NewBlockchain(genesisBlock Block) *BlockchainCore {
-	blockchainCore := new(BlockchainCore)
-	blockchainCore.TransactionPool = []*Transaction{}
-	blockchainCore.Blocks = []*Block{}
-	blockchainCore.Blocks = append(blockchainCore.Blocks, &genesisBlock)
+	if DBKeyExists() {
+		blockchianCore, err := DBGetBlockchain()
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	return blockchainCore
+		return blockchianCore
+	} else {
+		blockchainCore := new(BlockchainCore)
+		blockchainCore.TransactionPool = []*Transaction{}
+		blockchainCore.Blocks = []*Block{}
+		blockchainCore.Blocks = append(blockchainCore.Blocks, &genesisBlock)
+
+		err := DBAddBllockchain(*blockchainCore)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return blockchainCore
+	}
 }
 
 // ToJson converts the BlockchainCore structure to a JSON string
@@ -38,6 +54,12 @@ func (bc BlockchainCore) ToJson() string {
 // AddTransactionToTransactionPool takes a Transaction and adds it to the blockchain's transaction pool
 func (bc *BlockchainCore) AddTransactionToTransactionPool(transaction Transaction) {
 	bc.TransactionPool = append(bc.TransactionPool, &transaction)
+
+	// Save the blockchain to the database
+	err := DBAddBllockchain(*bc)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // AddBlock adds a new block to the blockchain and removes its transactions from the transaction pool.
@@ -63,6 +85,12 @@ func (bc *BlockchainCore) AddBlock(b *Block) {
 
 	// Add block to blockchain
 	bc.Blocks = append(bc.Blocks, b)
+
+	// Save the blockchain to the database
+	err := DBAddBllockchain(*bc)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // ProofOfWorkMining continuously mines new blocks using proof of work consensus.
@@ -107,7 +135,7 @@ func (bc *BlockchainCore) ProofOfWorkMining(minersAddress string) {
 			guessBlock.Transactions = append(guessBlock.Transactions, rewardTxn)
 			bc.AddBlock(guessBlock)
 
-			log.Println(bc.ToJson(), "\n\n")
+			log.Println(bc.ToJson())
 
 			prevHash = bc.Blocks[len(bc.Blocks)-1].Hash()
 			nonce = 0

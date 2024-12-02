@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"encoding/json"
+	"math"
 
 	"github.com/SunTzu71/suntzu_blockchain/constants"
 )
@@ -39,4 +40,19 @@ func (t Transaction) ToJson() string {
 		return err.Error()
 	}
 	return string(nb)
+}
+
+// VerifyTxn validates a transaction by checking if the value is within valid range.
+// Returns false if value is 0 or exceeds uint64 max, true otherwise.
+func (t Transaction) VerifyTransaction() bool {
+	if t.Value == 0 {
+		return false
+	}
+
+	if t.Value > math.MaxUint64 {
+		return false
+	}
+
+	// TODO: need to implement VerifySignature when we create wallet logic
+	return true
 }

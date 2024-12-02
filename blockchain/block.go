@@ -50,3 +50,17 @@ func (b Block) Hash() string {
 
 	return formattedHexRep
 }
+
+// AddTransactionToTheBlock verifies a transaction and adds it to the block's transaction list.
+// The transaction status is set to SUCCESS if valid, or FAILED if invalid.
+func (b *Block) AddTransactionToTheBlock(txn *Transaction) {
+	isTransactionValid := txn.VerifyTransaction()
+
+	if isTransactionValid {
+		txn.Status = constants.SUCCESS
+	} else {
+		txn.Status = constants.FAILED
+	}
+
+	b.Transactions = append(b.Transactions, txn)
+}

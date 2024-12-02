@@ -28,3 +28,8 @@ func (bc BlockchainCore) ToJson() string {
 
 	return string(nb)
 }
+
+// AddTransactionToTransactionPool takes a Transaction and adds it to the blockchain's transaction pool
+func (bc *BlockchainCore) AddTransactionToTransactionPool(transaction Transaction) {
+	bc.TransactionPool = append(bc.TransactionPool, &transaction)
+}

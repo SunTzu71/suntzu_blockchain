@@ -1,10 +1,13 @@
 package blockchain
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"math"
+	"math/big"
 
 	"github.com/SunTzu71/suntzu_blockchain/constants"
 )
@@ -44,8 +47,11 @@ func (t Transaction) ToJson() string {
 	return string(nb)
 }
 
-// VerifyTxn validates a transaction by checking if the value is within valid range.
-// Returns false if value is 0 or exceeds uint64 max, true otherwise.
+// VerifyTransaction checks if the transaction is valid by verifying:
+// 1. The value is not zero
+// 2. The value does not exceed maximum uint64
+// 3. The signature is valid
+// Returns true if all checks pass, false otherwise
 func (t Transaction) VerifyTransaction() bool {
 	if t.Value == 0 {
 		return false
@@ -55,10 +61,36 @@ func (t Transaction) VerifyTransaction() bool {
 		return false
 	}
 
-	// TODO: need to implement VerifySignature when we create wallet logic
+	valid := t.VeryifySignature()
+	if !valid {
+		return false
+	}
+
 	return true
 }
 
+// VerifySignature validates the transaction signature using the public key
+// It temporarily removes the signature and public key from the transaction,
+// hashes the resulting data, and verifies the signature against the hash
+// Returns true if the signature is valid, false otherwise
+func (t Transaction) VeryifySignature() bool {
+	signature := t.Signature
+	publicKeyHex := t.PublicKey
+	t.Signature = []byte{}
+	t.PublicKey = ""
+	publicKeyEcdsa := GetPublicKeyFromHex(publicKeyHex)
+
+	bs, _ := json.Marshal(t)
+	hash := sha256.Sum256(bs)
+
+	valid := ecdsa.VerifyASN1(publicKeyEcdsa, hash[:], signature)
+	t.Signature = signature
+
+	return valid
+}
+
+// Hash generates a SHA-256 hash of the transaction data and returns it as a hex string with prefix.
+// The transaction is first marshaled to JSON, then hashed, and finally encoded to a hex string.
 func (t Transaction) Hash() string {
 	bs, _ := json.Marshal(t)
 	sum := sha256.Sum256(bs)
@@ -66,4 +98,24 @@ func (t Transaction) Hash() string {
 	formattedHexRep := constants.HEX_PREFIX + hexRep
 
 	return formattedHexRep
+}
+
+// GetPublicKeyFromHex converts a hex string representation of a public key to an ECDSA public key
+// It strips the hex prefix, splits the remaining string into x and y coordinates,
+// and creates a new public key using the P256 curve
+func GetPublicKeyFromHex(publicKeyHex string) *ecdsa.PublicKey {
+	rpk := publicKeyHex[2:]
+	xHex := rpk[0:64]
+	yHex := rpk[64:]
+	x := new(big.Int)
+	y := new(big.Int)
+	x.SetString(xHex, 16)
+	y.SetString(yHex, 16)
+
+	var npk ecdsa.PublicKey
+	npk.Curve = elliptic.P256()
+	npk.X = x
+	npk.Y = y
+
+	return &npk
 }

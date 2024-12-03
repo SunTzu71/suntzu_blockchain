@@ -7,7 +7,7 @@ const (
 	SUCCESS            = "success"
 	FAILED             = "failed"
 	PENDING            = "pending"
-	MINING_DIFFICULTY  = 6
+	MINING_DIFFICULTY  = 5
 	MINING_REWARD      = 100 * DECIMAL
 	CURRENCY_NAME      = "SZU"
 	DECIMAL            = 100

@@ -105,12 +105,9 @@ func (bc *BlockchainCore) ProofOfWorkMining(minersAddress string) {
 	var nonce int64 = 0
 
 	for {
-		// create a new block
 		guessBlock := NewBlock(prevHash, nonce)
 
-		// copy the transaction pool
 		for _, txn := range bc.TransactionPool {
-			//newTxn := NewTransaction(txn.From, txn.To, txn.Value, txn.Data)
 			newTxn := new(Transaction)
 			newTxn.Data = txn.Data
 			newTxn.From = txn.From

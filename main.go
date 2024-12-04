@@ -17,6 +17,6 @@ func init() {
 func main() {
 	genesisBlock := blockchain.NewBlock("0x0", 0)
 	blockchain1 := blockchain.NewBlockchain(*genesisBlock)
-	bcs := blockchainserver.CreateBlockchainServer(5000, blockchain1)
+	bcs := blockchainserver.CreateBlockchainServer(8000, blockchain1)
 	bcs.StartBlockchainServer()
 }

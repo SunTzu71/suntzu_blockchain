@@ -63,6 +63,29 @@ func (bcs *BlockchainServer) GetNonRewardedTransactions(w http.ResponseWriter, r
 	}
 }
 
+// SendTranactionBlockchain: handles HTTP requests to add a new transaction to the blockchain
+// Accepts a transaction as JSON in POST requests and returns the added transaction
+// Returns an error for other methods
+func (bcs *BlockchainServer) SendTranactionBlockchain(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method == http.MethodPost {
+		request, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var newTransaction blockchain.Transaction
+		err = json.Unmarshal(request, &newTransaction)
+		if err != nil {
+			log.Fatal(err)
+		}
+		bcs.BlockchainPtr.AddTransactionToTransactionPool(newTransaction)
+		io.WriteString(w, newTransaction.ToJson())
+	} else {
+		http.Error(w, "Invalid method", http.StatusBadRequest)
+	}
+}
+
 // CreateBlockchainServer: creates a new blockchain server with the given port and blockchain reference
 func CreateBlockchainServer(port uint64, blockchainPtr *blockchain.BlockchainCore) *BlockchainServer {
 	bcs := new(BlockchainServer)
@@ -77,6 +100,7 @@ func (bcs *BlockchainServer) StartBlockchainServer() {
 	http.HandleFunc("/", bcs.GetBlockchain)
 	http.HandleFunc("/balance", bcs.GetBalance)
 	http.HandleFunc("/get-non-rewarded-transactions", bcs.GetNonRewardedTransactions)
+	http.HandleFunc("/send-transaction", bcs.SendTranactionBlockchain)
 
 	log.Println("Starting server on port " + strconv.Itoa(int(bcs.Port)))
 

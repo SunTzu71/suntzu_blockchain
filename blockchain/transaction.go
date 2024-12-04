@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"math"
 	"math/big"
+	"time"
 
 	"github.com/SunTzu71/suntzu_blockchain/constants"
 )
@@ -18,6 +19,7 @@ type Transaction struct {
 	Value           uint64 `json:"value"`
 	Data            []byte `json:"data"`
 	Status          string `json:"status"`
+	Timestamp       uint64 `json:"timestamp"`
 	TransactionHash string `json:"transaction_hash"`
 	PublicKey       string `json:"public_key,omitempty"`
 	Signature       []byte `json:"Signature"`
@@ -32,6 +34,7 @@ func NewTransaction(from string, to string, value uint64, data []byte) *Transact
 	t.Value = value
 	t.Data = data
 	t.Status = constants.PENDING
+	t.Timestamp = uint64(time.Now().Unix())
 	t.TransactionHash = t.Hash()
 	t.PublicKey = ""
 	t.Signature = []byte{}
@@ -69,11 +72,15 @@ func (t Transaction) VerifyTransaction() bool {
 	return true
 }
 
-// VerifySignature validates the transaction signature using the public key
-// It temporarily removes the signature and public key from the transaction,
-// hashes the resulting data, and verifies the signature against the hash
-// Returns true if the signature is valid, false otherwise
+// VeryifySignature verifies the digital signature of a transaction using ECDSA
+// It first checks if signature and public key exist, then verifies the signature
+// against the transaction hash using the public key.
+// Returns true if signature is valid, false otherwise
 func (t Transaction) VeryifySignature() bool {
+	if t.Signature == nil || t.PublicKey == "" {
+		return false
+	}
+
 	signature := t.Signature
 	publicKeyHex := t.PublicKey
 	t.Signature = []byte{}

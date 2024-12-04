@@ -21,7 +21,7 @@ type Block struct {
 func NewBlock(prevHash string, nonce int64) *Block {
 	block := new(Block)
 	block.PrevHash = prevHash
-	block.Timestamp = time.Now().UnixNano()
+	block.Timestamp = time.Now().Unix()
 	block.Nonce = nonce
 	block.Transactions = []*Transaction{}
 

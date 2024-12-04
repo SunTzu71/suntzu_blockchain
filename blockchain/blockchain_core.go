@@ -113,6 +113,7 @@ func (bc *BlockchainCore) ProofOfWorkMining(minersAddress string) {
 			newTxn.From = txn.From
 			newTxn.To = txn.To
 			newTxn.Status = txn.Status
+			newTxn.Timestamp = txn.Timestamp
 			newTxn.Value = txn.Value
 			newTxn.TransactionHash = txn.TransactionHash
 			newTxn.PublicKey = txn.PublicKey

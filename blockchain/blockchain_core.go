@@ -174,3 +174,32 @@ func (bc *BlockchainCore) CalculateTotalCrypto(address string) uint64 {
 
 	return balance
 }
+
+// GetAllTransactions: retrieves all transactions from both the transaction pool and blocks
+// in reverse chronological order (newest first). It first collects transactions from the
+// transaction pool, then adds transactions from blocks, excluding mining reward transactions
+// (those from BLOCKCHAIN_ADDRESS). Returns a slice of all non-reward transactions.
+func (bc *BlockchainCore) GetAllNonRewardedTransactions() []Transaction {
+
+	newestTxns := []Transaction{}
+
+	for i := len(bc.TransactionPool) - 1; i >= 0; i-- {
+		newestTxns = append(newestTxns, *bc.TransactionPool[i])
+	}
+
+	txns := []Transaction{}
+
+	for _, block := range bc.Blocks {
+		for _, txn := range block.Transactions {
+			if txn.From != constants.BLOCKCHAIN_ADDRESS {
+				txns = append(txns, *txn)
+			}
+		}
+	}
+
+	for i := len(txns) - 1; i >= 0; i-- {
+		newestTxns = append(newestTxns, txns[i])
+	}
+
+	return newestTxns
+}

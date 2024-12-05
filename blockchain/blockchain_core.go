@@ -143,7 +143,7 @@ func (bc *BlockchainCore) ProofOfWorkMining(minersAddress string) {
 	}
 }
 
-// CalculateTotalCrypto calculates the total balance of cryptocurrency for a given address
+// CalculateTotalCrypto: calculates the total balance of cryptocurrency for a given address
 // by examining all successful transactions in both the blockchain and transaction pool.
 // It adds received amounts (To) and subtracts sent amounts (From) for the address.
 func (bc *BlockchainCore) CalculateTotalCrypto(address string) uint64 {

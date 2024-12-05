@@ -1,6 +1,7 @@
 package walletserver
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,8 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/SunTzu71/suntzu_blockchain/blockchain"
+	"github.com/SunTzu71/suntzu_blockchain/constants"
 	"github.com/SunTzu71/suntzu_blockchain/wallet"
 )
 
@@ -74,10 +77,58 @@ func (ws *WalletServer) GetTotalCryptoFromWallet(w http.ResponseWriter, r *http.
 	}
 }
 
+// SendTransaction: handles POST requests to create and send a new transaction using the provided private key
+// and transaction details, sending it to the blockchain node and returning the response
+// TODO: Find a better way to send transaction and not send private key
+func (ws *WalletServer) SendTransaction(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method == http.MethodPost {
+		privateKey := r.URL.Query().Get("privateKey")
+		dataBytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		defer r.Body.Close()
+
+		var trans1 blockchain.Transaction
+		err = json.Unmarshal(dataBytes, &trans1)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+
+		wallet1 := wallet.NewWalletFromPrivateKeyHex(privateKey)
+		myTransaction := blockchain.NewTransaction(wallet1.GetAddress(), trans1.To, trans1.Value, []byte{})
+		myTransaction.Status = constants.PENDING
+		newTransaction, err := wallet1.GetSignedTransaction(*myTransaction)
+
+		newTransactionBytes, err := json.Marshal(newTransaction)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+
+		// Send transaction to blockchain
+		response, err := http.Post(ws.BlockchainNodeAddress+"/send-transaction", "application/json", bytes.NewBuffer(newTransactionBytes))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+		defer response.Body.Close()
+
+		data, err := io.ReadAll(response.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+		io.WriteString(w, string(data))
+
+	} else {
+		http.Error(w, "Method not allowed", http.StatusBadRequest)
+	}
+}
+
 // StartWalletServer: initializes and starts the wallet server, setting up HTTP handlers and listening for connections
 func (ws *WalletServer) StartWalletServer() {
 	http.HandleFunc("/total-from-wallet", ws.GetTotalCryptoFromWallet)
 	http.HandleFunc("/create-new-wallet", ws.CreateNewWallet)
+	http.HandleFunc("/send-wallet-transaction", ws.SendTransaction)
 
 	log.Printf("Wallet server listening on port %d", ws.Port)
 

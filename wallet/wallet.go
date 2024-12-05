@@ -99,6 +99,7 @@ func (w *Wallet) GetSignedTransaction(unsignedTxn blockchain.Transaction) (*bloc
 	signedTxn.Data = unsignedTxn.Data
 	signedTxn.Status = unsignedTxn.Status
 	signedTxn.Value = unsignedTxn.Value
+	signedTxn.Timestamp = unsignedTxn.Timestamp
 	signedTxn.TransactionHash = unsignedTxn.TransactionHash
 
 	signedTxn.Signature = sig

@@ -35,6 +35,7 @@ func (ws *WalletServer) CreateNewWallet(w http.ResponseWriter, r *http.Request) 
 		walletNew, err := wallet.NewWallet()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		x := struct {
 			PrivateKeyHex string `json:"private_key_hex"`
@@ -48,10 +49,12 @@ func (ws *WalletServer) CreateNewWallet(w http.ResponseWriter, r *http.Request) 
 		wbs, err := json.Marshal(x)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		io.WriteString(w, string(wbs))
 	} else {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
 	}
 }
 
@@ -65,15 +68,18 @@ func (ws *WalletServer) GetTotalCryptoFromWallet(w http.ResponseWriter, r *http.
 		response, err := http.Get(ourUrl)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 		defer response.Body.Close()
 		data, err := io.ReadAll(response.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 		io.WriteString(w, string(data))
 	} else {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
 	}
 }
 
@@ -87,6 +93,7 @@ func (ws *WalletServer) SendTransaction(w http.ResponseWriter, r *http.Request) 
 		dataBytes, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		defer r.Body.Close()
 
@@ -94,6 +101,7 @@ func (ws *WalletServer) SendTransaction(w http.ResponseWriter, r *http.Request) 
 		err = json.Unmarshal(dataBytes, &trans1)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		wallet1 := wallet.NewWalletFromPrivateKeyHex(privateKey)
@@ -104,23 +112,27 @@ func (ws *WalletServer) SendTransaction(w http.ResponseWriter, r *http.Request) 
 		newTransactionBytes, err := json.Marshal(newTransaction)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		// Send transaction to blockchain
 		response, err := http.Post(ws.BlockchainNodeAddress+"/send-transaction", "application/json", bytes.NewBuffer(newTransactionBytes))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 		defer response.Body.Close()
 
 		data, err := io.ReadAll(response.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 		io.WriteString(w, string(data))
 
 	} else {
 		http.Error(w, "Method not allowed", http.StatusBadRequest)
+		return
 	}
 }
 

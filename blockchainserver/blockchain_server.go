@@ -23,6 +23,7 @@ func (bcs *BlockchainServer) GetBlockchain(w http.ResponseWriter, r *http.Reques
 		io.WriteString(w, bcs.BlockchainPtr.ToJson())
 	} else {
 		http.Error(w, "Invalid method", http.StatusBadRequest)
+		return
 	}
 }
 
@@ -44,6 +45,7 @@ func (bcs *BlockchainServer) GetBalance(w http.ResponseWriter, r *http.Request) 
 		io.WriteString(w, string(mBalance))
 	} else {
 		http.Error(w, "Invalid method", http.StatusBadRequest)
+		return
 	}
 }
 
@@ -60,6 +62,7 @@ func (bcs *BlockchainServer) GetNonRewardedTransactions(w http.ResponseWriter, r
 		io.WriteString(w, string(bs))
 	} else {
 		http.Error(w, "Invalid method", http.StatusBadRequest)
+		return
 	}
 }
 
@@ -83,6 +86,7 @@ func (bcs *BlockchainServer) SendTranactionBlockchain(w http.ResponseWriter, r *
 		io.WriteString(w, newTransaction.ToJson())
 	} else {
 		http.Error(w, "Invalid method", http.StatusBadRequest)
+		return
 	}
 }
 

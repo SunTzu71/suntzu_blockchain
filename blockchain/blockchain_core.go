@@ -113,6 +113,7 @@ func (bc *BlockchainCore) AddBlock(b *Block) {
 // The function runs indefinitely, creating new blocks that meet the mining difficulty
 // requirement by incrementing a nonce value until a valid hash is found.
 func (bc *BlockchainCore) ProofOfWorkMining(minersAddress string) {
+	log.Println("Proof of work mining started")
 	// calculcate the prevHash
 	prevHash := bc.Blocks[len(bc.Blocks)-1].Hash()
 
@@ -147,8 +148,6 @@ func (bc *BlockchainCore) ProofOfWorkMining(minersAddress string) {
 			rewardTxn.Status = constants.SUCCESS
 			guessBlock.Transactions = append(guessBlock.Transactions, rewardTxn)
 			bc.AddBlock(guessBlock)
-
-			log.Println(bc.ToJson())
 
 			prevHash = bc.Blocks[len(bc.Blocks)-1].Hash()
 			nonce = 0

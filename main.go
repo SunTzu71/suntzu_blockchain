@@ -52,6 +52,16 @@ func main() {
 		}
 	}
 	case "wallet":
+	walletCommandSet.Parse(os.Args[2:])
+		if walletCommandSet.Parsed() {
+			if walletCommandSet.NFlag() == 0 {
+				fmt.Println("Usage of wallet subcommand: ")
+				walletCommandSet.PrintDefaults()
+				os.Exit(1)
+			}
+			ws := walletserver.CreateWalletServer(*walletPort, *blockchainNodeAddress)
+			go ws.StartWalletServer()
+		}
 	default:
 		fmt.Println("Error: expected chain or wallet command")
 		os.Exit(1)

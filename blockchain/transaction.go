@@ -56,7 +56,7 @@ func (t Transaction) ToJson() string {
 // 3. The signature is valid
 // Returns true if all checks pass, false otherwise
 func (t Transaction) VerifyTransaction() bool {
-	if t.Value == 0 {
+	if t.Value <= 0 {
 		return false
 	}
 

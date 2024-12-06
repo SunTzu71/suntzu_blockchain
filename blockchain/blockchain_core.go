@@ -51,9 +51,24 @@ func (bc BlockchainCore) ToJson() string {
 	return string(nb)
 }
 
-// AddTransactionToTransactionPool takes a Transaction and adds it to the blockchain's transaction pool
-func (bc *BlockchainCore) AddTransactionToTransactionPool(transaction Transaction) {
-	bc.TransactionPool = append(bc.TransactionPool, &transaction)
+// AddTransactionToTransactionPool: verifies a transaction's signature and sender balance,
+// sets its status accordingly, and adds it to the blockchain's transaction pool.
+// The transaction is verified for valid signature and sufficient sender balance.
+// Updates transaction status to success or failure based on verification.
+// Persists the updated blockchain to database after adding the transaction.
+func (bc *BlockchainCore) AddTransactionToTransactionPool(transaction *Transaction) {
+	validTransaction := transaction.VerifyTransaction()
+
+	realBalance := bc.CalculateTotalCrypto(transaction.From)
+	validRealBalance := realBalance >= transaction.Value
+
+	if validTransaction && validRealBalance {
+		transaction.Status = constants.TRANSACTION_VERIFY_SUCCESS
+	} else {
+		transaction.Status = constants.TRANSACTION_VERIFY_FAILED
+	}
+
+	bc.TransactionPool = append(bc.TransactionPool, transaction)
 
 	// Save the blockchain to the database
 	err := DBAddBllockchain(*bc)

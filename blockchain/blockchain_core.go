@@ -67,7 +67,7 @@ func (bc *BlockchainCore) AddTransactionToTransactionPool(transaction *Transacti
 	} else {
 		transaction.Status = constants.TRANSACTION_VERIFY_FAILED
 	}
-
+	transaction.PublicKey = ""
 	bc.TransactionPool = append(bc.TransactionPool, transaction)
 
 	// Save the blockchain to the database

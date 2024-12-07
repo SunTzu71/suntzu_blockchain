@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 
 	"github.com/SunTzu71/suntzu_blockchain/blockchain"
 	"github.com/SunTzu71/suntzu_blockchain/blockchainserver"
@@ -25,6 +26,7 @@ func main() {
 
 	chainPort := chainCommandSet.Uint("port", 8000, "port to run the blockchain server")
 	chainMiner := chainCommandSet.String("miner", "", "miner address")
+	remoteNode := chainCommandSet.String("remote_node", "", "remote node address")
 
 	walletPort := walletCommandSet.Uint("port", 8080, "port to run the wallet server")
 	blockchainNodeAddress := walletCommandSet.String("node", "http://127.0.0.1:8000", "blockchain node address")
@@ -43,16 +45,22 @@ func main() {
 				chainCommandSet.PrintDefaults()
 				os.Exit(1)
 			}
-			genesisBlock := blockchain.NewBlock("0x0", 0)
-			blockchain := blockchain.NewBlockchain(*genesisBlock)
-			bcs := blockchainserver.CreateBlockchainServer(uint64(*chainPort), blockchain)
-			go bcs.StartBlockchainServer()
-			go bcs.BlockchainPtr.ProofOfWorkMining(*chainMiner)
 
-			// Wait for interrupt signal
-			c := make(chan os.Signal, 1)
-			signal.Notify(c, os.Interrupt)
-			<-c
+			// if remote node is empy launch new blockchain
+			if *remoteNode == "" {
+				genesisBlock := blockchain.NewBlock("0x0", 0)
+				blockchain := blockchain.NewBlockchain(*genesisBlock, "http://127.0.0.1:"+strconv.Itoa(int(*chainPort)))
+				bcs := blockchainserver.CreateBlockchainServer(uint64(*chainPort), blockchain)
+				go bcs.StartBlockchainServer()
+				go bcs.BlockchainPtr.ProofOfWorkMining(*chainMiner)
+
+				// Wait for interrupt signal
+				c := make(chan os.Signal, 1)
+				signal.Notify(c, os.Interrupt)
+				<-c
+			} else {
+				log.Println("Remote node: " + *remoteNode)
+			}
 		}
 	case "wallet":
 		walletCommandSet.Parse(os.Args[2:])

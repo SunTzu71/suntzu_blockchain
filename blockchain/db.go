@@ -7,10 +7,10 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-// DBAddBllockchain: saves the blockchain core state to the database
+// DBAddBlockchain: saves the blockchain core state to the database
 // It takes a BlockchainCore struct and stores it as JSON in LevelDB
 // Returns an error if database operations fail
-func DBAddBllockchain(bs BlockchainCore) error {
+func DBAddBlockchain(bs BlockchainCore) error {
 	db, err := leveldb.OpenFile(constants.BLOCKCHAIN_DB_PATH, nil)
 	if err != nil {
 		return err

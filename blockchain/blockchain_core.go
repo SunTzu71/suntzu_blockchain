@@ -11,13 +11,14 @@ import (
 type BlockchainCore struct {
 	TransactionPool []*Transaction `json:"transaction_pool"`
 	Blocks          []*Block       `json:"blocks"`
+	Address         string         `json:"address"`
 }
 
-// NewBlockchain creates a new blockchain instance with a genesis block
-// Uses KeyExists() to check if blockchain data exists in database
-// Uses PutIntoDb() to persist blockchain data
-// Returns a pointer to the new BlockchainCore
-func NewBlockchain(genesisBlock Block) *BlockchainCore {
+// NewBlockchain: creates a new blockchain instance with a genesis block
+// If blockchain data exists in the database (checked via DBKeyExists), retrieves and returns it
+// Otherwise creates a new blockchain with the genesis block and persists it via DBAddBlockchain
+// Returns a pointer to the BlockchainCore instance in either case
+func NewBlockchain(genesisBlock Block, address string) *BlockchainCore {
 	if DBKeyExists() {
 		blockchianCore, err := DBGetBlockchain()
 		if err != nil {
@@ -30,8 +31,9 @@ func NewBlockchain(genesisBlock Block) *BlockchainCore {
 		blockchainCore.TransactionPool = []*Transaction{}
 		blockchainCore.Blocks = []*Block{}
 		blockchainCore.Blocks = append(blockchainCore.Blocks, &genesisBlock)
+		blockchainCore.Address = address
 
-		err := DBAddBllockchain(*blockchainCore)
+		err := DBAddBlockchain(*blockchainCore)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -71,7 +73,7 @@ func (bc *BlockchainCore) AddTransactionToTransactionPool(transaction *Transacti
 	bc.TransactionPool = append(bc.TransactionPool, transaction)
 
 	// Save the blockchain to the database
-	err := DBAddBllockchain(*bc)
+	err := DBAddBlockchain(*bc)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -102,7 +104,7 @@ func (bc *BlockchainCore) AddBlock(b *Block) {
 	bc.Blocks = append(bc.Blocks, b)
 
 	// Save the blockchain to the database
-	err := DBAddBllockchain(*bc)
+	err := DBAddBlockchain(*bc)
 	if err != nil {
 		log.Fatal(err)
 	}

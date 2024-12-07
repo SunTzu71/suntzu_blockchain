@@ -108,7 +108,7 @@ func (bcs *BlockchainServer) StartBlockchainServer() {
 
 	log.Println("Starting server on port " + strconv.Itoa(int(bcs.Port)))
 
-	err := http.ListenAndServe("127.0.0.1:"+strconv.Itoa(int(bcs.Port)), nil)
+	err := http.ListenAndServe("127.0.0.1:"+strconv.Itoa(int(bcs.Port)), nil) // TODO: place address in config file
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

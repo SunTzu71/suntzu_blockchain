@@ -42,6 +42,16 @@ func NewBlockchain(genesisBlock Block, address string) *BlockchainCore {
 	}
 }
 
+// NewBlockchainSync: creates a copy of an existing blockchain with a new address
+// Takes a pointer to an existing BlockchainCore and a new address string
+// Returns a pointer to the new BlockchainCore instance with updated address
+func NewBlockchainSync(bc1 *BlockchainCore, address string) *BlockchainCore {
+	bc2 := bc1
+	bc2.Address = address
+
+	return bc2
+}
+
 // ToJson converts the BlockchainCore structure to a JSON string
 // Returns the JSON string representation or an error message if marshal fails
 func (bc BlockchainCore) ToJson() string {

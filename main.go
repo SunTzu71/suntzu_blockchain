@@ -46,7 +46,7 @@ func main() {
 				os.Exit(1)
 			}
 
-			// if remote node is empy launch new blockchain
+			// if remote node is empty launch new blockchain
 			if *remoteNode == "" {
 				genesisBlock := blockchain.NewBlock("0x0", 0)
 				blockchain := blockchain.NewBlockchain(*genesisBlock, "http://127.0.0.1:"+strconv.Itoa(int(*chainPort)))
@@ -59,7 +59,20 @@ func main() {
 				signal.Notify(c, os.Interrupt)
 				<-c
 			} else {
-				log.Println("Remote node: " + *remoteNode)
+				blockchain1, err := blockchain.SyncBlockchain(*remoteNode)
+				if err != nil {
+					log.Fatal(err)
+					os.Exit(1)
+				}
+				blockchain2 := blockchain.NewBlockchainSync(blockchain1, "http://127.0.0.1:"+strconv.Itoa(int(*chainPort)))
+				bcs := blockchainserver.CreateBlockchainServer(uint64(*chainPort), blockchain2)
+				go bcs.StartBlockchainServer()
+				go bcs.BlockchainPtr.ProofOfWorkMining(*chainMiner)
+
+				// Wait for interrupt signal
+				c := make(chan os.Signal, 1)
+				signal.Notify(c, os.Interrupt)
+				<-c
 			}
 		}
 	case "wallet":

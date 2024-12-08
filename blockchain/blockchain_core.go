@@ -49,6 +49,10 @@ func NewBlockchainSync(bc1 *BlockchainCore, address string) *BlockchainCore {
 	bc2 := bc1
 	bc2.Address = address
 
+	err := DBAddBlockchain(*bc2)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return bc2
 }
 

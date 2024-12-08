@@ -19,7 +19,6 @@ func init() {
 	log.SetPrefix(constants.BLOCKCHAIN_NAME + ": ")
 }
 
-// Main function to run the blockchain
 func main() {
 	chainCommandSet := flag.NewFlagSet("chain", flag.ExitOnError)
 	walletCommandSet := flag.NewFlagSet("wallet", flag.ExitOnError)

@@ -4,15 +4,19 @@ import (
 	"encoding/json"
 	"log"
 	"strings"
+	"sync"
 
 	"github.com/SunTzu71/suntzu_blockchain/constants"
 )
 
 type BlockchainCore struct {
-	TransactionPool []*Transaction `json:"transaction_pool"`
-	Blocks          []*Block       `json:"blocks"`
-	Address         string         `json:"address"`
+	TransactionPool []*Transaction  `json:"transaction_pool"`
+	Blocks          []*Block        `json:"blocks"`
+	Address         string          `json:"address"`
+	Peers           map[string]bool `json:"peers"`
 }
+
+var mutex sync.Mutex
 
 // NewBlockchain: creates a new blockchain instance with a genesis block
 // If blockchain data exists in the database (checked via DBKeyExists), retrieves and returns it
@@ -54,6 +58,14 @@ func NewBlockchainSync(bc1 *BlockchainCore, address string) *BlockchainCore {
 		log.Fatal(err)
 	}
 	return bc2
+}
+
+// PeersToJson converts the BlockchainCore structure to JSON bytes
+// Returns the byte array representation of the BlockchainCore
+func (bc BlockchainCore) PeersToJson() []byte {
+	nb, _ := json.Marshal(bc)
+
+	return nb
 }
 
 // ToJson converts the BlockchainCore structure to a JSON string

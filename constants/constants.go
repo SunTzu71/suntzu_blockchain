@@ -17,4 +17,5 @@ const (
 	ADDRESS_PREFIX             = "suntzuchain"
 	TRANSACTION_VERIFY_SUCCESS = "verification_success"
 	TRANSACTION_VERIFY_FAILED  = "verification_failed"
+	BLOCKCHAIN_STATUS          = "running"
 )

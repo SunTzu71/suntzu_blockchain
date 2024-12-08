@@ -118,6 +118,7 @@ func (bcs *BlockchainServer) SendPeersList(w http.ResponseWriter, r *http.Reques
 	if r.Method == http.MethodPost {
 		peersMap, err := io.ReadAll(r.Body)
 		if err != nil {
+			log.Println("Error reading peers list:", err)
 			http.Error(w, "Invalid method", http.StatusBadRequest)
 			return
 		}
@@ -125,6 +126,7 @@ func (bcs *BlockchainServer) SendPeersList(w http.ResponseWriter, r *http.Reques
 		var peersList map[string]bool
 		err = json.Unmarshal(peersMap, &peersList)
 		if err != nil {
+			log.Println("Error unmarshalling peers list:", err)
 			http.Error(w, "Invalid method", http.StatusBadRequest)
 			return
 		}
@@ -133,6 +135,7 @@ func (bcs *BlockchainServer) SendPeersList(w http.ResponseWriter, r *http.Reques
 		res["success"] = "success"
 		x, err := json.Marshal(res)
 		if err != nil {
+			log.Println("Error marshalling response:", err)
 			http.Error(w, "Invalid method", http.StatusBadRequest)
 			return
 		}

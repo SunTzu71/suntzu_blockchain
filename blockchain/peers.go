@@ -65,7 +65,12 @@ func (bc *BlockchainCore) UpdatePeers(peers map[string]bool) {
 func (bc *BlockchainCore) SendPeersList(address string) {
 	data := bc.PeersToJson()
 	ourURL := fmt.Sprintf("%s/send-peers-list", address)
-	http.Post(ourURL, "application/json", bytes.NewBuffer(data))
+	resp, err := http.Post(ourURL, "application/json", bytes.NewBuffer(data))
+	if err != nil {
+		log.Printf("Error sending peers list: %v", err)
+		return
+	}
+	defer resp.Body.Close()
 }
 
 // CheckStatus: checks if a blockchain server at the given address is available and running.
@@ -79,13 +84,13 @@ func (bc *BlockchainCore) CheckStatus(address string) bool {
 		log.Println("Error checking server status:", err)
 		return false
 	}
+	defer resp.Body.Close()
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Println("Error reading server status response:", err)
 		return false
 	}
-	defer resp.Body.Close()
 
 	return string(data) == constants.BLOCKCHAIN_STATUS
 }
@@ -108,22 +113,27 @@ func (bc *BlockchainCore) BroadcastPeerList() {
 // After updating peers, broadcasts the new peer list to the network and sleeps for the configured
 // ping interval before the next update cycle.
 func (bc *BlockchainCore) DialUpdatePeers() {
+	ticker := time.NewTicker(constants.PEER_PING_INTERVAL * time.Second)
+	defer ticker.Stop()
+
 	for {
-		log.Println("Pinging peers", bc.Peers)
-		newList := bc.Peers
-		for peer := range bc.Peers {
-			if peer != bc.Address {
-				newList[peer] = bc.CheckStatus(peer)
-			} else {
-				newList[peer] = true
+		select {
+		case <-ticker.C:
+			log.Println("Pinging peers", bc.Peers)
+			newList := make(map[string]bool)
+			for peer := range bc.Peers {
+				if peer != bc.Address {
+					newList[peer] = bc.CheckStatus(peer)
+					time.Sleep(constants.PEER_PING_INTERVAL * time.Second)
+				} else {
+					newList[peer] = true
+				}
 			}
+
+			bc.UpdatePeers(newList)
+			log.Println("Peers updated")
+
+			bc.BroadcastPeerList()
 		}
-
-		bc.UpdatePeers(newList)
-		log.Println("Peers updated")
-
-		bc.BroadcastPeerList()
-
-		time.Sleep(constants.PEER_PING_INTERVAL * time.Second)
 	}
 }

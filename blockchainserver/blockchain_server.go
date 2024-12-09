@@ -73,6 +73,8 @@ func (bcs *BlockchainServer) GetNonRewardedTransactions(w http.ResponseWriter, r
 func (bcs *BlockchainServer) SendTranactionBlockchain(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if r.Method == http.MethodPost {
+		defer r.Body.Close()
+
 		request, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Fatal(err)

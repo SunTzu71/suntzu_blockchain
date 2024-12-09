@@ -80,24 +80,35 @@ func (bc BlockchainCore) ToJson() string {
 	return string(nb)
 }
 
-// AddTransactionToTransactionPool: verifies a transaction's signature and sender balance,
-// sets its status accordingly, and adds it to the blockchain's transaction pool.
-// The transaction is verified for valid signature and sufficient sender balance.
-// Updates transaction status to success or failure based on verification.
-// Persists the updated blockchain to database after adding the transaction.
+// appendTransaction safely appends a transaction to the blockchain's transaction pool
+// using mutex locking to prevent concurrent access. Takes a transaction pointer and
+// adds it to the TransactionPool slice.
+func (bc *BlockchainCore) appendTransaction(transaction *Transaction) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	bc.TransactionPool = append(bc.TransactionPool, transaction)
+}
+
+// AddTransactionToTransactionPool: processes a new transaction and adds it to the transaction pool.
+// It verifies the transaction's signature and checks if the sender has sufficient balance
+// by simulating the impact of pending transactions. The transaction's status is updated
+// based on verification results and it is added to the pool. The blockchain state is then
+// persisted to the database.
 func (bc *BlockchainCore) AddTransactionToTransactionPool(transaction *Transaction) {
 	validTransaction := transaction.VerifyTransaction()
 
-	realBalance := bc.CalculateTotalCrypto(transaction.From)
-	validRealBalance := realBalance >= transaction.Value
+	validRealBalance := bc.simulatedBalanceCheck(validTransaction, transaction)
 
 	if validTransaction && validRealBalance {
 		transaction.Status = constants.TRANSACTION_VERIFY_SUCCESS
 	} else {
 		transaction.Status = constants.TRANSACTION_VERIFY_FAILED
 	}
+
 	transaction.PublicKey = ""
-	bc.TransactionPool = append(bc.TransactionPool, transaction)
+
+	bc.appendTransaction(transaction)
 
 	// Save the blockchain to the database
 	err := DBAddBlockchain(*bc)
@@ -106,10 +117,32 @@ func (bc *BlockchainCore) AddTransactionToTransactionPool(transaction *Transacti
 	}
 }
 
+// simulatedBalanceCheck: validates if an account has sufficient funds for a pending transaction
+// by computing the account balance after applying all transactions in the pool.
+// Takes validity flag validTrans to indicate if the transaction passed signature verification,
+// and transaction pointer with details of the transfer to check.
+// Returns true if account would have sufficient balance after applying all pending transactions.
+func (bc *BlockchainCore) simulatedBalanceCheck(validTrans bool, transaction *Transaction) bool {
+	balance := bc.CalculateTotalCrypto(transaction.From)
+	for _, txx := range bc.TransactionPool {
+		if transaction.From == txx.From && validTrans {
+			if balance >= txx.Value {
+				balance -= txx.Value
+			} else {
+				break
+			}
+		}
+	}
+	return balance >= transaction.Value
+}
+
 // AddBlock adds a new block to the blockchain and removes its transactions from the transaction pool.
 // It takes a pointer to a Block as input and updates both the blockchain's transaction pool
 // and blocks array. Transactions in the new block are removed from the pool to prevent double-spending.
 func (bc *BlockchainCore) AddBlock(b *Block) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	// Create a map of transaction hashes in the new block
 	txnMap := make(map[string]bool)
 	for _, txn := range b.Transactions {

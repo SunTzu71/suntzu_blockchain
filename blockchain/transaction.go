@@ -53,7 +53,8 @@ func (t Transaction) ToJson() string {
 // VerifyTransaction checks if the transaction is valid by verifying:
 // 1. The value is not zero
 // 2. The value does not exceed maximum uint64
-// 3. The signature is valid
+// 3. The sender and receiver addresses are not the same
+// 4. The signature is valid
 // Returns true if all checks pass, false otherwise
 func (t Transaction) VerifyTransaction() bool {
 	if t.Value <= 0 {
@@ -61,6 +62,10 @@ func (t Transaction) VerifyTransaction() bool {
 	}
 
 	if t.Value > math.MaxUint64 {
+		return false
+	}
+
+	if t.From == t.To {
 		return false
 	}
 

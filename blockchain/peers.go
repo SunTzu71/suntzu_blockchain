@@ -48,6 +48,9 @@ func SyncBlockchain(address string) (*BlockchainCore, error) {
 func (bc *BlockchainCore) UpdatePeers(peers map[string]bool) {
 	mutex.Lock()
 	defer mutex.Unlock()
+
+	log.Println("Updating peers list...", peers)
+
 	bc.Peers = peers
 
 	err := DBAddBlockchain(*bc)
@@ -87,11 +90,40 @@ func (bc *BlockchainCore) CheckStatus(address string) bool {
 	return string(data) == constants.BLOCKCHAIN_STATUS
 }
 
+// BroadcastPeerList: broadcasts the blockchain's peer list to all active peers in the network.
+// Iterates through the peer list, sending the peer list to each active peer except itself.
+// Includes a delay between broadcasts to prevent network congestion.
 func (bc *BlockchainCore) BroadcastPeerList() {
 	for peer, status := range bc.Peers {
 		if peer != bc.Address && status {
 			bc.SendPeersList(peer)
 			time.Sleep(constants.PEER_LIST_UPDATE_INTERVAL * time.Second)
 		}
+	}
+}
+
+// DialUpdatePeers: continuously checks and updates the status of peers in the blockchain network.
+// Iterates through the peer list periodically, checking each peer's status via HTTP
+// and updating the peers map accordingly. The blockchain's own address is always marked as active.
+// After updating peers, broadcasts the new peer list to the network and sleeps for the configured
+// ping interval before the next update cycle.
+func (bc *BlockchainCore) DialUpdatePeers() {
+	for {
+		log.Println("Pinging peers", bc.Peers)
+		newList := bc.Peers
+		for peer := range bc.Peers {
+			if peer != bc.Address {
+				newList[peer] = bc.CheckStatus(peer)
+			} else {
+				newList[peer] = true
+			}
+		}
+
+		bc.UpdatePeers(newList)
+		log.Println("Peers updated")
+
+		bc.BroadcastPeerList()
+
+		time.Sleep(constants.PEER_PING_INTERVAL * time.Second)
 	}
 }

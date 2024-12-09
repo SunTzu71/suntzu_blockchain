@@ -18,5 +18,6 @@ const (
 	TRANSACTION_VERIFY_SUCCESS = "verification_success"
 	TRANSACTION_VERIFY_FAILED  = "verification_failed"
 	BLOCKCHAIN_STATUS          = "running"
-	PEER_LIST_UPDATE_INTERVAL  = 1 // in seconds
+	PEER_LIST_UPDATE_INTERVAL  = 1  // in seconds
+	PEER_PING_INTERVAL         = 60 // in seconds
 )

@@ -36,6 +36,7 @@ func NewBlockchain(genesisBlock Block, address string) *BlockchainCore {
 		blockchainCore.Blocks = []*Block{}
 		blockchainCore.Blocks = append(blockchainCore.Blocks, &genesisBlock)
 		blockchainCore.Address = address
+		blockchainCore.Peers = map[string]bool{}
 
 		err := DBAddBlockchain(*blockchainCore)
 		if err != nil {
@@ -63,7 +64,7 @@ func NewBlockchainSync(bc1 *BlockchainCore, address string) *BlockchainCore {
 // PeersToJson converts the BlockchainCore structure to JSON bytes
 // Returns the byte array representation of the BlockchainCore
 func (bc BlockchainCore) PeersToJson() []byte {
-	nb, _ := json.Marshal(bc)
+	nb, _ := json.Marshal(bc.Peers)
 
 	return nb
 }

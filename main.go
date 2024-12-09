@@ -49,9 +49,11 @@ func main() {
 			if *remoteNode == "" {
 				genesisBlock := blockchain.NewBlock("0x0", 0)
 				blockchain := blockchain.NewBlockchain(*genesisBlock, "http://127.0.0.1:"+strconv.Itoa(int(*chainPort)))
+				blockchain.Peers[blockchain.Address] = true
 				bcs := blockchainserver.CreateBlockchainServer(uint64(*chainPort), blockchain)
 				go bcs.StartBlockchainServer()
 				go bcs.BlockchainPtr.ProofOfWorkMining(*chainMiner)
+				go bcs.BlockchainPtr.DialUpdatePeers()
 
 				// Wait for interrupt signal
 				c := make(chan os.Signal, 1)
@@ -63,10 +65,13 @@ func main() {
 					log.Fatal(err)
 					os.Exit(1)
 				}
+
 				blockchain2 := blockchain.NewBlockchainSync(blockchain1, "http://127.0.0.1:"+strconv.Itoa(int(*chainPort)))
+				blockchain2.Peers[blockchain2.Address] = true
 				bcs := blockchainserver.CreateBlockchainServer(uint64(*chainPort), blockchain2)
 				go bcs.StartBlockchainServer()
 				go bcs.BlockchainPtr.ProofOfWorkMining(*chainMiner)
+				go bcs.BlockchainPtr.DialUpdatePeers()
 
 				// Wait for interrupt signal
 				c := make(chan os.Signal, 1)

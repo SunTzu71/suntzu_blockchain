@@ -257,3 +257,51 @@ func (bc *BlockchainCore) UpdateBlockchain(newChain []*Block) {
 		}
 	}
 }
+
+func (bc *BlockchainCore) RunConsensus() {
+	for {
+		log.Println("Running consensus...")
+		longestChain := bc.Blocks
+		lengthOfTheLongestChain := bc.Blocks[len(bc.Blocks)-1].BlockNumber + 1
+		longestChainIsOur := true
+		for peer, status := range bc.Peers {
+			if peer != bc.Address && status {
+				bc1, err := FetchBlocks(peer)
+				if err != nil {
+					log.Println("Error while  fetching blocks from peer:", peer, "Error:", err.Error())
+					continue
+				}
+
+				lengthOfTheFetchedChain := bc1.Blocks[len(bc1.Blocks)-1].BlockNumber + 1
+				if lengthOfTheFetchedChain > lengthOfTheLongestChain {
+					longestChain = bc1.Blocks
+					lengthOfTheLongestChain = lengthOfTheFetchedChain
+					longestChainIsOur = false
+				}
+			}
+		}
+
+		if longestChainIsOur {
+			log.Println("Our chain is the longest, not updating.")
+			time.Sleep(constants.CONSENSUS_PAUSE_INTERVAL * time.Second)
+			continue
+		}
+
+		if verifyBlocks(longestChain) {
+			// Stop mining
+			bc.MiningLocked = true
+
+			bc.UpdateBlockchain(longestChain)
+
+			// Restart mining
+			bc.MiningLocked = false
+
+			log.Println("Blockchain update complete!")
+		} else {
+			log.Println("Chain Verification Failed, not updating my blockchain")
+		}
+
+		time.Sleep(constants.CONSENSUS_PAUSE_INTERVAL * time.Second)
+	}
+
+}

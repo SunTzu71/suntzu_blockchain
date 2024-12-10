@@ -21,4 +21,5 @@ const (
 	PEER_LIST_UPDATE_INTERVAL  = 1  // in seconds
 	PEER_PING_INTERVAL         = 60 // in seconds
 	FETCH_BLOCK_NUMBER         = 50 // number of blocks to fetchfor consensus
+	CONSENSUS_PAUSE_INTERVAL   = 10 // in seconds
 )

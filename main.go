@@ -52,8 +52,9 @@ func main() {
 				blockchain.Peers[blockchain.Address] = true
 				bcs := blockchainserver.CreateBlockchainServer(uint64(*chainPort), blockchain)
 				go bcs.StartBlockchainServer()
-				//go bcs.BlockchainPtr.ProofOfWorkMining(*chainMiner)
+				go bcs.BlockchainPtr.ProofOfWorkMining(*chainMiner)
 				go bcs.BlockchainPtr.DialUpdatePeers()
+				go bcs.BlockchainPtr.RunConsensus()
 
 				// Wait for interrupt signal
 				c := make(chan os.Signal, 1)
@@ -70,8 +71,9 @@ func main() {
 				blockchain2.Peers[blockchain2.Address] = true
 				bcs := blockchainserver.CreateBlockchainServer(uint64(*chainPort), blockchain2)
 				go bcs.StartBlockchainServer()
-				//go bcs.BlockchainPtr.ProofOfWorkMining(*chainMiner)
+				go bcs.BlockchainPtr.ProofOfWorkMining(*chainMiner)
 				go bcs.BlockchainPtr.DialUpdatePeers()
+				go bcs.BlockchainPtr.RunConsensus()
 
 				// Wait for interrupt signal
 				c := make(chan os.Signal, 1)

@@ -14,6 +14,7 @@ type BlockchainCore struct {
 	Blocks          []*Block        `json:"blocks"`
 	Address         string          `json:"address"`
 	Peers           map[string]bool `json:"peers"`
+	MiningLocked    bool            `json:"mining_locked"`
 }
 
 var mutex sync.Mutex
@@ -37,6 +38,7 @@ func NewBlockchain(genesisBlock Block, address string) *BlockchainCore {
 		blockchainCore.Blocks = append(blockchainCore.Blocks, &genesisBlock)
 		blockchainCore.Address = address
 		blockchainCore.Peers = map[string]bool{}
+		blockchainCore.MiningLocked = false
 
 		err := DBAddBlockchain(*blockchainCore)
 		if err != nil {
@@ -200,16 +202,28 @@ func (bc *BlockchainCore) AddBlock(b *Block) {
 // requirement by incrementing a nonce value until a valid hash is found.
 func (bc *BlockchainCore) ProofOfWorkMining(minersAddress string) {
 	log.Println("Proof of work mining started")
-	// calculcate the prevHash
-	prevHash := bc.Blocks[len(bc.Blocks)-1].Hash()
 
-	// had to set this as int64 getting error that new block nonce was int
 	var nonce int64 = 0
 
 	for {
+		if bc.MiningLocked {
+			continue
+		}
+
+		prevHash := bc.Blocks[len(bc.Blocks)-1].Hash()
+
 		guessBlock := NewBlock(prevHash, nonce, uint64(len(bc.Blocks)))
 
+		if bc.MiningLocked {
+			continue
+		}
+
 		for _, txn := range bc.TransactionPool {
+
+			if bc.MiningLocked {
+				continue
+			}
+
 			newTxn := new(Transaction)
 			newTxn.Data = txn.Data
 			newTxn.From = txn.From
@@ -224,18 +238,30 @@ func (bc *BlockchainCore) ProofOfWorkMining(minersAddress string) {
 			guessBlock.AddTransactionToTheBlock(newTxn)
 		}
 
+		if bc.MiningLocked {
+			continue
+		}
+
+		rewardTxn := NewTransaction(constants.BLOCKCHAIN_ADDRESS, minersAddress, constants.MINING_REWARD, []byte{})
+		rewardTxn.Status = constants.SUCCESS
+		guessBlock.Transactions = append(guessBlock.Transactions, rewardTxn)
+
 		// guess the hash
 		guessHash := guessBlock.Hash()
 		desiredHash := strings.Repeat("0", constants.MINING_DIFFICULTY)
 		ourSolutionHash := guessHash[2 : 2+constants.MINING_DIFFICULTY]
 
+		if bc.MiningLocked {
+			continue
+		}
+
 		if ourSolutionHash == desiredHash {
-			rewardTxn := NewTransaction(constants.BLOCKCHAIN_ADDRESS, minersAddress, constants.MINING_REWARD, []byte{})
-			rewardTxn.Status = constants.SUCCESS
-			guessBlock.Transactions = append(guessBlock.Transactions, rewardTxn)
-			bc.AddBlock(guessBlock)
-			log.Println("Mined block number: ", guessBlock.BlockNumber)
-			prevHash = bc.Blocks[len(bc.Blocks)-1].Hash()
+
+			if !bc.MiningLocked {
+				bc.AddBlock(guessBlock)
+				log.Println("Mined block number: ", guessBlock.BlockNumber)
+			}
+
 			nonce = 0
 			continue
 		}

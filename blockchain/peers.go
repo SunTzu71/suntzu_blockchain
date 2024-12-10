@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/SunTzu71/suntzu_blockchain/constants"
@@ -134,6 +135,28 @@ func (bc *BlockchainCore) DialUpdatePeers() {
 			log.Println("Peers updated")
 
 			bc.BroadcastPeerList()
+		}
+	}
+}
+
+// SendTransactionPeer: sends a transaction to a specified peer address via HTTP POST.
+// Takes the peer's address and a transaction pointer as input, converts the transaction
+// to JSON, and sends it to the peer's /send-transaction endpoint.
+func (bc *BlockchainCore) SendTransactionPeer(address string, txn *Transaction) {
+	data := txn.ToJson()
+	ourURL := fmt.Sprintf("%s/send-transaction", address)
+	http.Post(ourURL, "application/json", strings.NewReader(data))
+}
+
+// BroadcastTransaction: broadcasts a transaction to all active peers in the network.
+// Iterates through the peer list, sending the transaction to each active peer except itself.
+// Includes a delay between broadcasts to prevent network congestion.
+func (bc *BlockchainCore) BroadcastTransaction(txn *Transaction) {
+	for peer, status := range bc.Peers {
+		if peer != bc.Address && status {
+			log.Println("Broadcasting transaction to peer:", peer, "transaction:", txn.ToJson())
+			bc.SendTransactionPeer(peer, txn)
+			time.Sleep(constants.PEER_LIST_UPDATE_INTERVAL * time.Second)
 		}
 	}
 }

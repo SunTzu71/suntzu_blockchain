@@ -88,6 +88,12 @@ func (bc *BlockchainCore) appendTransaction(transaction *Transaction) {
 	defer mutex.Unlock()
 
 	bc.TransactionPool = append(bc.TransactionPool, transaction)
+
+	// Save the blockchain to the database
+	err := DBAddBlockchain(*bc)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // AddTransactionToTransactionPool: processes a new transaction and adds it to the transaction pool.
@@ -96,6 +102,27 @@ func (bc *BlockchainCore) appendTransaction(transaction *Transaction) {
 // based on verification results and it is added to the pool. The blockchain state is then
 // persisted to the database.
 func (bc *BlockchainCore) AddTransactionToTransactionPool(transaction *Transaction) {
+
+	for _, txn := range bc.TransactionPool {
+		if txn.TransactionHash == transaction.TransactionHash {
+			return
+		}
+	}
+
+	log.Println("Adding transaction to transaction pool")
+
+	// Send transaction in original format to all peers
+	newTransaction := new(Transaction)
+	newTransaction.Data = transaction.Data
+	newTransaction.From = transaction.From
+	newTransaction.To = transaction.To
+	newTransaction.Status = transaction.Status
+	newTransaction.Timestamp = transaction.Timestamp
+	newTransaction.Value = transaction.Value
+	newTransaction.TransactionHash = transaction.TransactionHash
+	newTransaction.PublicKey = transaction.PublicKey
+	newTransaction.Signature = transaction.Signature
+
 	validTransaction := transaction.VerifyTransaction()
 
 	validRealBalance := bc.simulatedBalanceCheck(validTransaction, transaction)
@@ -110,11 +137,8 @@ func (bc *BlockchainCore) AddTransactionToTransactionPool(transaction *Transacti
 
 	bc.appendTransaction(transaction)
 
-	// Save the blockchain to the database
-	err := DBAddBlockchain(*bc)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// TODO: this may need to be moved after transaction status is successfully updated
+	bc.BroadcastTransaction(newTransaction)
 }
 
 // simulatedBalanceCheck: validates if an account has sufficient funds for a pending transaction

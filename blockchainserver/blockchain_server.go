@@ -86,7 +86,7 @@ func (bcs *BlockchainServer) SendTranactionBlockchain(w http.ResponseWriter, r *
 		if err != nil {
 			log.Fatal(err)
 		}
-		bcs.BlockchainPtr.AddTransactionToTransactionPool(&newTransaction)
+		go bcs.BlockchainPtr.AddTransactionToTransactionPool(&newTransaction)
 		io.WriteString(w, newTransaction.ToJson())
 	} else {
 		http.Error(w, "Invalid method", http.StatusBadRequest)

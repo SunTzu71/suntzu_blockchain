@@ -148,6 +148,27 @@ func (bcs *BlockchainServer) SendPeersList(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// FetchConsensusBlocks: handles HTTP requests to fetch recent blocks for consensus
+// Returns the most recent blocks (up to FETCH_BLOCK_NUMBER) as JSON for GET requests
+// If fewer blocks exist than FETCH_BLOCK_NUMBER, returns all blocks
+// Returns an error for non-GET methods
+func (bcs *BlockchainServer) FetchConsensusBlocks(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	if r.Method == http.MethodGet {
+		blocks := bcs.BlockchainPtr.Blocks
+		blockchain1 := new(blockchain.BlockchainCore)
+		if len(blocks) < constants.FETCH_BLOCK_NUMBER {
+			blockchain1.Blocks = blocks
+		} else {
+			blockchain1.Blocks = blocks[len(blocks)-constants.FETCH_BLOCK_NUMBER:]
+		}
+		io.WriteString(w, blockchain1.ToJson())
+	} else {
+		http.Error(w, "Invalid method", http.StatusBadRequest)
+		return
+	}
+}
+
 // StartBlockchainServer: starts the server to handle blockchain requests
 func (bcs *BlockchainServer) StartBlockchainServer() {
 	http.HandleFunc("/", bcs.GetBlockchain)
@@ -156,6 +177,7 @@ func (bcs *BlockchainServer) StartBlockchainServer() {
 	http.HandleFunc("/send-transaction", bcs.SendTranactionBlockchain)
 	http.HandleFunc("/send-peers-list", bcs.SendPeersList)
 	http.HandleFunc("/check-server-status", CheckServerStatus)
+	http.HandleFunc("/fetch-consensus-blocks", bcs.FetchConsensusBlocks)
 
 	log.Println("Starting server on port " + strconv.Itoa(int(bcs.Port)))
 

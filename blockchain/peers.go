@@ -160,3 +160,100 @@ func (bc *BlockchainCore) BroadcastTransaction(txn *Transaction) {
 		}
 	}
 }
+
+// FetchBlocks: fetches the last N blocks (defined by FETCH_BLOCK_NUMBER constant) from a given address.
+// Makes an HTTP GET request to the fetch-consensus-blocks endpoint, reads the response data,
+// and unmarshals it into a BlockchainCore struct. Returns a pointer to the blockchain containing
+// the fetched blocks and any errors encountered.
+func FetchBlocks(address string) (*BlockchainCore, error) {
+	log.Println("Fetching last", constants.FETCH_BLOCK_NUMBER, "blocks")
+	outURL := fmt.Sprintf("%s/fetch-consensus-blocks", address)
+	resp, err := http.Get(outURL)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var bc BlockchainCore
+	err = json.Unmarshal(data, &bc)
+	if err != nil {
+		return nil, err
+	}
+
+	return &bc, nil
+}
+
+// verifyBlocks: verifies the integrity of a blockchain by checking block hashes and mining difficulty.
+// Takes a slice of Block pointers and returns true if all blocks are valid, false otherwise.
+// Validates that the genesis block and all subsequent blocks meet the required mining difficulty,
+// and that each block's previous hash matches the actual hash of the previous block.
+func verifyBlocks(chain []*Block) bool {
+	if chain[0].Hash()[2:] != strings.Repeat("0", constants.MINING_DIFFICULTY) {
+		return false
+	}
+
+	for i := 1; i < len(chain); i++ {
+		if chain[i-1].Hash() != chain[i].PrevHash {
+			log.Println("Prev hash verification failed for block")
+			return false
+		}
+
+		if chain[i].Hash()[2:] != strings.Repeat("0", constants.MINING_DIFFICULTY) {
+			log.Println("Difficulty verification failed for block")
+			return false
+		}
+	}
+
+	return true
+}
+
+// UpdateBlockchain: updates the blockchain with a new chain of blocks. Takes a slice of new blocks,
+// updates the blockchain's blocks array by appending the new chain at the correct position based on
+// block numbers, and updates the transaction pool by removing any transactions that are now included
+// in the blockchain. Thread-safe using mutex locks. After updating, saves the new blockchain state to  the database
+func (bc *BlockchainCore) UpdateBlockchain(newChain []*Block) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	blocks := []*Block{}
+	initIndex := newChain[0].BlockNumber
+	blocks = append(blocks, bc.Blocks[:initIndex]...)
+	blocks = append(blocks, newChain...)
+
+	bc.Blocks = blocks
+
+	// Update transaction pool
+	found := map[string]bool{}
+	for _, txn := range bc.TransactionPool {
+		found[txn.TransactionHash] = false
+	}
+
+	for _, block := range newChain {
+		for _, txn := range block.Transactions {
+			_, ok := found[txn.TransactionHash]
+			if ok {
+				found[txn.TransactionHash] = true
+			}
+		}
+
+		newTxnPool := []*Transaction{}
+		for _, txn := range bc.TransactionPool {
+			if !found[txn.TransactionHash] {
+				newTxnPool = append(newTxnPool, txn)
+			}
+		}
+
+		bc.TransactionPool = newTxnPool
+
+		// Save the blockchain to the database
+		err := DBAddBlockchain(*bc)
+		if err != nil {
+			panic(err.Error())
+		}
+	}
+}

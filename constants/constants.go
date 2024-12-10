@@ -12,7 +12,7 @@ const (
 	CURRENCY_NAME              = "SZU"
 	DECIMAL                    = 100
 	BLOCKCHAIN_ADDRESS         = "SunTzu_Faucet"
-	BLOCKCHAIN_DB_PATH         = "8000/suntzuchain.db"
+	BLOCKCHAIN_DB_PATH         = "8001/suntzuchain.db"
 	BLOCKCHAIN_KEY             = "blockchain_key"
 	ADDRESS_PREFIX             = "suntzuchain"
 	TRANSACTION_VERIFY_SUCCESS = "verification_success"
@@ -20,4 +20,5 @@ const (
 	BLOCKCHAIN_STATUS          = "running"
 	PEER_LIST_UPDATE_INTERVAL  = 1  // in seconds
 	PEER_PING_INTERVAL         = 60 // in seconds
+	FETCH_BLOCK_NUMBER         = 50 // number of blocks to fetchfor consensus
 )

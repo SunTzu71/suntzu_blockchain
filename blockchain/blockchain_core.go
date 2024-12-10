@@ -207,7 +207,7 @@ func (bc *BlockchainCore) ProofOfWorkMining(minersAddress string) {
 	var nonce int64 = 0
 
 	for {
-		guessBlock := NewBlock(prevHash, nonce)
+		guessBlock := NewBlock(prevHash, nonce, uint64(len(bc.Blocks)))
 
 		for _, txn := range bc.TransactionPool {
 			newTxn := new(Transaction)
@@ -234,7 +234,7 @@ func (bc *BlockchainCore) ProofOfWorkMining(minersAddress string) {
 			rewardTxn.Status = constants.SUCCESS
 			guessBlock.Transactions = append(guessBlock.Transactions, rewardTxn)
 			bc.AddBlock(guessBlock)
-
+			log.Println("Mined block number: ", guessBlock.BlockNumber)
 			prevHash = bc.Blocks[len(bc.Blocks)-1].Hash()
 			nonce = 0
 			continue

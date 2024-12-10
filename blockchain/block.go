@@ -10,6 +10,7 @@ import (
 )
 
 type Block struct {
+	BlockNumber  uint64         `json:"block_number"`
 	PrevHash     string         `json:"prev_hash"`
 	Timestamp    int64          `json:"timestamp"`
 	Nonce        int64          `json:"nonce"`
@@ -18,12 +19,13 @@ type Block struct {
 
 // NewBlock creates a new Block instance with the provided previous hash and nonce value,
 // initializing its timestamp to the current time and an empty transaction list
-func NewBlock(prevHash string, nonce int64) *Block {
+func NewBlock(prevHash string, nonce int64, blockNumber uint64) *Block {
 	block := new(Block)
 	block.PrevHash = prevHash
 	block.Timestamp = time.Now().Unix()
 	block.Nonce = nonce
 	block.Transactions = []*Transaction{}
+	block.BlockNumber = blockNumber
 
 	return block
 }

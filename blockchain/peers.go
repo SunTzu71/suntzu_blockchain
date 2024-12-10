@@ -193,18 +193,19 @@ func FetchBlocks(address string) (*BlockchainCore, error) {
 // Validates that the genesis block and all subsequent blocks meet the required mining difficulty,
 // and that each block's previous hash matches the actual hash of the previous block.
 func verifyBlocks(chain []*Block) bool {
-	if chain[0].Hash()[2:] != strings.Repeat("0", constants.MINING_DIFFICULTY) {
+	if chain[0].BlockNumber != 0 && chain[0].Hash()[2:2+constants.MINING_DIFFICULTY] != strings.Repeat("0", constants.MINING_DIFFICULTY) {
+		log.Println("Chain verification failed for block", chain[0].BlockNumber, "hash:", chain[0].Hash())
 		return false
 	}
 
 	for i := 1; i < len(chain); i++ {
 		if chain[i-1].Hash() != chain[i].PrevHash {
-			log.Println("Prev hash verification failed for block")
+			log.Println("Prev hash verification failed for block", chain[0].BlockNumber)
 			return false
 		}
 
-		if chain[i].Hash()[2:] != strings.Repeat("0", constants.MINING_DIFFICULTY) {
-			log.Println("Difficulty verification failed for block")
+		if chain[i].Hash()[2:2+constants.MINING_DIFFICULTY] != strings.Repeat("0", constants.MINING_DIFFICULTY) {
+			log.Println("Chain verification failed for block", chain[0].BlockNumber, "hash:", chain[0].Hash())
 			return false
 		}
 	}

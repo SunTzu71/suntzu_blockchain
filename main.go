@@ -26,6 +26,7 @@ func main() {
 	chainPort := chainCommandSet.Uint("port", 8000, "port to run the blockchain server")
 	chainMiner := chainCommandSet.String("miner", "", "miner address")
 	remoteNode := chainCommandSet.String("remote_node", "", "remote node address")
+	dbPath := chainCommandSet.String("db_path", "", "database path")
 
 	walletPort := walletCommandSet.Uint("port", 8080, "port to run the wallet server")
 	blockchainNodeAddress := walletCommandSet.String("node", "http://127.0.0.1:8000", "blockchain node address")
@@ -38,6 +39,11 @@ func main() {
 	case "chain":
 		chainCommandSet.Parse(os.Args[2:])
 		if chainCommandSet.Parsed() {
+
+			constants.BLOCKCHAIN_DB_PATH = fmt.Sprintf("%d/suntzuchain.db", *chainPort)
+			if *dbPath != "" {
+				constants.BLOCKCHAIN_DB_PATH = *dbPath
+			}
 
 			if *chainMiner == "" || chainCommandSet.NFlag() == 0 {
 				fmt.Println("Usage of chain subcommand: ")

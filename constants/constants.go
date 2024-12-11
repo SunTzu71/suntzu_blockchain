@@ -1,5 +1,8 @@
 package constants
 
+// Database path for the blockchain
+var BLOCKCHAIN_DB_PATH string
+
 // Constants used throughout the blockchain
 const (
 	BLOCKCHAIN_NAME            = "SunTzuChain"
@@ -12,7 +15,6 @@ const (
 	CURRENCY_NAME              = "SZU"
 	DECIMAL                    = 100
 	BLOCKCHAIN_ADDRESS         = "SunTzu_Faucet"
-	BLOCKCHAIN_DB_PATH         = "8000/suntzuchain.db"
 	BLOCKCHAIN_KEY             = "blockchain_key"
 	ADDRESS_PREFIX             = "suntzuchain"
 	TRANSACTION_VERIFY_SUCCESS = "verification_success"
